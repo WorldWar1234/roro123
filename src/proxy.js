@@ -1,5 +1,5 @@
 import fetch from 'node-fetch';
-import lodash from 'lodash'; // Import lodash as the default import
+import lodash from 'lodash';
 import { generateRandomIP, randomUserAgent } from './utils.js';
 import { copyHeaders as copyHdrs } from './copyHeaders.js';
 import { compressImg as applyCompression } from './compress.js';
@@ -65,17 +65,17 @@ export async function processRequest(request, reply) {
             return handleRedirect(request, reply);
         }
 
-        const buffer = await response.arrayBuffer();
-
         copyHdrs(response, reply);
         reply.header('content-encoding', 'identity');
         request.params.originType = response.headers.get('content-type') || '';
-        request.params.originSize = buffer.length;
+        request.params.originSize = response.headers.get('content-length') || 0;
 
         if (checkCompression(request)) {
-            return applyCompression(request, reply, buffer);
+            // Pipe the response stream to the compression function
+            return applyCompression(request, reply, response.body);
         } else {
-            return performBypass(request, reply, buffer);
+            // Directly pipe the response stream to the reply
+            return performBypass(request, reply, response.body);
         }
     } catch (err) {
         return handleRedirect(request, reply);
