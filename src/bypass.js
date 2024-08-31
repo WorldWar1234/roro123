@@ -1,5 +1,5 @@
-export function bypass(request, reply, buffer) {
-  reply.header('x-proxy-bypass', 1);
-  reply.header('content-length', buffer.length);
-  return reply.code(200).send(buffer);
+export function bypass(request, reply, stream) {
+    reply.header('x-proxy-bypass', 1);
+    reply.removeHeader('content-encoding'); // Ensure no double-encoding
+    stream.pipe(reply.raw);
 }
