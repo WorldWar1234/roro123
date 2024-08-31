@@ -1,9 +1,12 @@
 export function copyHeaders(source, target) {
-  for (const [key, value] of Object.entries(source.headers)) {
+  for (const [key, value] of source.headers.entries()) {
     try {
-      target.header(key, value);
+      // If the value is iterable (like an array), join it into a single string
+      const headerValue = Array.isArray(value) ? value.join(', ') : value;
+      target.header(key, headerValue);
     } catch (e) {
-      console.log(e.message);
+      // Log any errors encountered when setting headers
+      console.log(`Failed to set header ${key}: ${e.message}`);
     }
   }
 }
