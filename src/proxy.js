@@ -1,9 +1,9 @@
 import fetch from 'node-fetch';
 import lodash from 'lodash';
 import { generateRandomIP, randomUserAgent } from './utils.js';
-import { copyHeaders as copyHdrs } from './copyHeaders.js';
-import { compressImg as applyCompression } from './compress.js';
-import { bypass as performBypass } from './bypass.js';
+import { copyHeaders } from './copyHeaders.js';
+import { compressImg } from './compress.js';
+import { bypass } from './bypass.js';
 import { redirect as handleRedirect } from './redirect.js';
 import { shouldCompress as checkCompression } from './shouldCompress.js';
 
@@ -33,8 +33,7 @@ export async function processRequest(request, reply) {
         };
 
         Object.entries(hdrs).forEach(([key, value]) => reply.header(key, value));
-        
-        return reply.send(`1we23`);
+        return reply.send('1we23');
     }
 
     const urlList = Array.isArray(url) ? url.join('&url=') : url;
@@ -57,7 +56,7 @@ export async function processRequest(request, reply) {
                 'via': randomVia(),
             },
             timeout: 10000,
-            follow: 5, // max redirects
+            follow: 5,
             compress: true,
         });
 
@@ -65,17 +64,15 @@ export async function processRequest(request, reply) {
             return handleRedirect(request, reply);
         }
 
-        copyHdrs(response, reply);
+        copyHeaders(response, reply);
         reply.header('content-encoding', 'identity');
         request.params.originType = response.headers.get('content-type') || '';
-        request.params.originSize = response.headers.get('content-length') || 0;
+        request.params.originSize = parseInt(response.headers.get('content-length'), 10) || 0;
 
         if (checkCompression(request)) {
-            // Pipe the response stream to the compression function
-            return applyCompression(request, reply, response.body);
+            return compressImg(request, reply, response.body);
         } else {
-            // Directly pipe the response stream to the reply
-            return performBypass(request, reply, response.body);
+            return bypass(request, reply, response.body);
         }
     } catch (err) {
         return handleRedirect(request, reply);
